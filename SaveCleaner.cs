@@ -14,10 +14,8 @@ namespace SaveCleaner
             saveContainer.savedObjects.RemoveAll(obj => !IsValidSaveableObject(obj.sceneIndex));
             saveContainer.loggedMissions.Do(mission => { if (!Enum.IsDefined(typeof(PortRegion), mission.repRegion) || !IsValidPrefab(mission.goodIndex)) mission.goodIndex = 0; });
             saveContainer.traderBoatData = CleanTraderBoatData(saveContainer.traderBoatData);
-            if (saveContainer.savedMissions.Length > 0)
-            {
-                saveContainer.savedMissions = CleanMissionData(saveContainer.savedMissions);
-            }
+            saveContainer.savedMissions = CleanMissionData(saveContainer.savedMissions);
+
             foreach (SaveObjectData objectData in saveContainer.savedObjects)
             {
                 if (objectData.customization != null)

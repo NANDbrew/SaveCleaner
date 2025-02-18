@@ -27,7 +27,6 @@ namespace SaveCleaner
                 saveContainer = (SaveContainer)binaryFormatter.Deserialize(fileStream);
             }
 
-            //CleanSave(ref saveContainer);
             saveContainer = SaveCleaner.CleanSave(saveContainer);
 
             using (FileStream fileStream = File.Open(path, FileMode.Create))
