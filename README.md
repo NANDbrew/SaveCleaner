@@ -7,5 +7,5 @@
 - sail colors
 
 ### Comes with a setting for automatic file overwrite (on by default)
-- ON: fixes saves on load and overwrites the file on disk
-- OFF: fixes saves on load, but waits for the game to save normally
+- ON: fixes savedata on load and writes it back into the file on disk
+- OFF: fixes savedata on load, but waits for the game to save normally
