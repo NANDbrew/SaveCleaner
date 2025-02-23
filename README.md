@@ -13,4 +13,5 @@
 ### Usage
 - put SaveCleaner.dll in your plugins folder
 - load the save you want to fix
+- if overwrite is off, save and quit
 - remove SaveCleaner.dll from your plugins folder
