@@ -14,9 +14,10 @@ namespace SaveCleaner
     {
         [HarmonyPatch("LoadGame")]
         [HarmonyPrefix]
-        private static void Patch(int backupIndex, TraderBoat[] ___traderBoats)
+        private static void LoadGamePatch(int backupIndex)
         {   //removes all references to the modded boat before the game loads
-            if (!Plugin.overWrite.Value) return;
+            if (Plugin.overWrite.Value == false) return;
+
             Debug.LogWarning("Save Cleaner Running");
             Debug.LogWarning("Cleaning Slot " + SaveSlots.currentSlot);
             string path = ((backupIndex != 0) ? SaveSlots.GetBackupPath(SaveSlots.currentSlot, backupIndex) : SaveSlots.GetCurrentSavePath());
@@ -29,21 +30,27 @@ namespace SaveCleaner
 
             saveContainer = SaveCleaner.CleanSave(saveContainer);
 
+            /*if (SaveCleaner.changes == 0)
+            {
+                Debug.LogWarning("Save didn't need cleaning");
+                return;
+            }*/
             using (FileStream fileStream = File.Open(path, FileMode.Create))
             {
                 binaryFormatter.Serialize(fileStream, saveContainer);
             }
             Debug.LogWarning("Save Cleaned");
         }
-    }
-    [HarmonyPatch(typeof(SaveLoadManager), "LoadNeeds")]
-    internal static class LoadCleaner
-    {
-        public static void Postfix(ref SaveContainer save, SaveableObject[] ___currentObjects)
+
+        [HarmonyPatch("LoadNeeds")]
+        [HarmonyPostfix]
+        public static void LoadNeedsPatch(ref SaveContainer save, SaveableObject[] ___currentObjects)
         {
             if (Plugin.overWrite.Value) return;
+            Debug.LogWarning("Save Cleaner Running");
             save = SaveCleaner.CleanSave(save);
 
+            Debug.LogWarning("Loaded Data Cleaned");
         }
     }
 }
