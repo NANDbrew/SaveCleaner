@@ -9,19 +9,12 @@ namespace SaveCleaner
 {
     internal static class SaveCleaner
     {
-        public static TraderBoatData[] referenceTraderData;
         public static int changes = 0;
         public static SaveContainer CleanSave(SaveContainer saveContainer)
         {
-            referenceTraderData = new TraderBoatData[saveContainer.traderBoatData.Length];
-            for (int i = 0; i < referenceTraderData.Length; i++)
-            {
-                referenceTraderData[i] = saveContainer.traderBoatData[i];
-            }
-            Debug.Log("trader boat data length = " + saveContainer.traderBoatData.Length);
             changes = 0;
-            saveContainer.savedPrefabs.RemoveAll(prefab => !IsValidPrefab(prefab.prefabIndex) || (prefab.itemParentObject > -1 && !IsValidSaveableObject(prefab.itemParentObject)));
-            saveContainer.savedObjects.RemoveAll(obj => !IsValidSaveableObject(obj.sceneIndex));
+            changes += saveContainer.savedPrefabs.RemoveAll(prefab => !IsValidPrefab(prefab.prefabIndex) || (prefab.itemParentObject > -1 && !IsValidSaveableObject(prefab.itemParentObject)));
+            changes += saveContainer.savedObjects.RemoveAll(obj => !IsValidSaveableObject(obj.sceneIndex));
             saveContainer.loggedMissions = CleanLoggedMissions(saveContainer.loggedMissions);
             saveContainer.traderBoatData = CleanTraderBoatData(saveContainer.traderBoatData);
             saveContainer.savedMissions = CleanMissionData(saveContainer.savedMissions);
@@ -49,7 +42,7 @@ namespace SaveCleaner
             if (data.partActiveOptions.Count > parts.availableParts.Count)
             {
                 data.partActiveOptions.RemoveRange(parts.availableParts.Count, data.partActiveOptions.Count - parts.availableParts.Count);
-                //changes++;
+                changes++;
             }
             for (int i = 0; i < data.partActiveOptions.Count; i++)
             {
@@ -65,7 +58,7 @@ namespace SaveCleaner
                 if (sail.sailColor >= PrefabsDirectory.instance.sailColors.Length)
                 {
                     sail.sailColor = 0;
-                    //changes++;
+                    changes++;
                 }
                 if (sail.mastIndex >= refs.masts.Length || refs.masts[sail.mastIndex] == null || sail.prefabIndex >= PrefabsDirectory.instance.sails.Length || PrefabsDirectory.instance.sails[sail.prefabIndex] == null)
                 {
@@ -84,29 +77,25 @@ namespace SaveCleaner
             for (int i = 0; i < incomingData.Length; i++)
             {
                 TraderBoatData traderBoatData = incomingData[i];
-                bool brokenIndex = false;
-
+                int problemCount = 0;
                 for (int j = 0; j < traderBoatData.carriedGoods.Length; j++)
                 {
                     int index = traderBoatData.carriedGoods[j];
                     if (index > 0 && !IsValidPrefab(index))
                     {
-                        brokenIndex = true;
                         traderBoatData.carriedGoods[j] = 0;
-                        //changes++;
-                        //break;
+                        problemCount++;
                     }
                 }
-                if (brokenIndex) changes++;
                 if (!IsValidPort(traderBoatData.currentIslandMarket))
                 {
                     traderBoatData.currentIslandMarket = -1;
-                    //changes++;
+                    problemCount++;
                 }
                 if (!IsValidPort(traderBoatData.currentDestination))
                 {
                     traderBoatData.currentDestination = -1;
-                    //changes++;
+                    problemCount++;
                 }
 
                 if (/*!brokenIndex && */IsValidPort(traderBoatData.lastIslandMarket))
@@ -115,34 +104,38 @@ namespace SaveCleaner
                 }
                 else
                 {
-                    changes++;
-                    Debug.LogError("removed trader boat " + i);
+                    problemCount++;
+                    Debug.LogError("Removed trader boat " + i);
                 }
+                if (problemCount > 0) changes++;
             }
             return outgoingData.ToArray();
         }
 
-        public static LoggedMission[] CleanLoggedMissions(LoggedMission[] savedMissions)
+        public static LoggedMission[] CleanLoggedMissions(LoggedMission[] loggedMissions)
         {
-            //bool changed = false;
-            for (int i = 0; i < savedMissions.Length; i++)
+            int problemCount = 0;
+            for (int i = 0; i < loggedMissions.Length; i++)
             {
-                LoggedMission mission = savedMissions[i];
+                if (loggedMissions[i] == null) continue;
+
+                LoggedMission mission = loggedMissions[i];
                 if (!IsValidPrefab(mission.goodIndex))
                 {
                     mission.goodIndex = 0;
-                    //changes++;
-                    //changed = true;
+                    problemCount++;
+                    Debug.LogError("axed loggedMission goodIndex");
+
                 }
                 if (!Enum.IsDefined(typeof(PortRegion), mission.repRegion))
                 {
                     mission.repRegion = (int)PortRegion.none;
-                    changes++;
-                    //changed = true;
+                    problemCount++;
+                    Debug.LogError("axed loggedMission repRegion");
                 }
             }
-            //changes += changed ? 1 : 0;
-            return savedMissions;
+            if (problemCount > 0) changes++;
+            return loggedMissions;
         }
 
 
@@ -150,6 +143,7 @@ namespace SaveCleaner
         {
             for (int i = 0; i < savedMissions.Length; i++)
             {
+                if (savedMissions[i] == null) continue;
                 SaveMissionData missionData = savedMissions[i];
                 if (missionData != null && IsValidPrefab(missionData.goodPrefabIndex) && IsValidPort(missionData.originPort) && IsValidPort(missionData.destinationPort))
                 {
@@ -158,6 +152,8 @@ namespace SaveCleaner
                 }
                 savedMissions[i] = null;
                 changes++;
+                Debug.LogError("axed savedMission");
+
             }
             return savedMissions;
         }
