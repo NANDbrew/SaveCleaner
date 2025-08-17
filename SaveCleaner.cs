@@ -9,12 +9,17 @@ namespace SaveCleaner
 {
     internal static class SaveCleaner
     {
+        //static SaveContainer referenceData;
         public static int changes = 0;
         public static SaveContainer CleanSave(SaveContainer saveContainer)
         {
+            //referenceData = saveContainer;
+            //saveContainer.savedPrefabs.Add(new SavePrefabData(Vector3.zero, Quaternion.identity, 999, true, 100, 0, -1, -1, -1, 1, 9999));
             changes = 0;
-            changes += saveContainer.savedPrefabs.RemoveAll(prefab => !IsValidPrefab(prefab.prefabIndex) || (prefab.itemParentObject > -1 && !IsValidSaveableObject(prefab.itemParentObject)));
-            changes += saveContainer.savedObjects.RemoveAll(obj => !IsValidSaveableObject(obj.sceneIndex));
+            //changes += saveContainer.savedPrefabs.RemoveAll(prefab => !IsValidPrefab(prefab.prefabIndex) || (prefab.itemParentObject > -1 && !IsValidSaveableObject(prefab.itemParentObject)));
+            //changes += saveContainer.savedObjects.RemoveAll(obj => !IsValidSaveableObject(obj.sceneIndex));
+            saveContainer.savedPrefabs = CleanPrefabs(saveContainer.savedPrefabs);
+            saveContainer.savedObjects = CleanObjects(saveContainer.savedObjects);
             saveContainer.loggedMissions = CleanLoggedMissions(saveContainer.loggedMissions);
             saveContainer.traderBoatData = CleanTraderBoatData(saveContainer.traderBoatData);
             saveContainer.savedMissions = CleanMissionData(saveContainer.savedMissions);
@@ -85,20 +90,23 @@ namespace SaveCleaner
                     {
                         traderBoatData.carriedGoods[j] = 0;
                         problemCount++;
+                        Debug.Log("removed trader boat carried good");
                     }
                 }
                 if (!IsValidPort(traderBoatData.currentIslandMarket))
                 {
                     traderBoatData.currentIslandMarket = -1;
                     problemCount++;
+                    Debug.Log("removed trader boat current island market");
                 }
                 if (!IsValidPort(traderBoatData.currentDestination))
                 {
                     traderBoatData.currentDestination = -1;
                     problemCount++;
+                    Debug.Log("removed trader boat destination");
                 }
 
-                if (/*!brokenIndex && */IsValidPort(traderBoatData.lastIslandMarket))
+                if (IsValidPort(traderBoatData.lastIslandMarket))
                 {
                     outgoingData.Add(traderBoatData);
                 }
@@ -120,7 +128,7 @@ namespace SaveCleaner
                 if (loggedMissions[i] == null) continue;
 
                 LoggedMission mission = loggedMissions[i];
-                if (!IsValidPrefab(mission.goodIndex))
+                if (mission.goodIndex != 0 && !IsValidPrefab(mission.goodIndex))
                 {
                     mission.goodIndex = 0;
                     problemCount++;
@@ -158,23 +166,54 @@ namespace SaveCleaner
             return savedMissions;
         }
 
+        public static List<SavePrefabData> CleanPrefabs(List<SavePrefabData> savedPrefabs)
+        {
+            for (int i = 0; i < savedPrefabs.Count;)
+            {
+                var prefab = savedPrefabs[i];
+                if (!IsValidPrefab(prefab.prefabIndex) || (prefab.itemParentObject > -1 && !IsValidSaveableObject(prefab.itemParentObject)))
+                {
+                    Debug.LogError($"removed prefab: {prefab.prefabIndex}, parent id was {prefab.itemParentObject}");
+                    savedPrefabs.RemoveAt(i);
+                    changes++;
+                }
+                else i++;
+            }
+            return savedPrefabs;
+        }
+
+        public static List<SaveObjectData> CleanObjects(List<SaveObjectData> savedObjects)
+        {
+            for (int i = 0; i < savedObjects.Count;)
+            {
+                var obj = savedObjects[i];
+                if (!IsValidSaveableObject(obj.sceneIndex))
+                {
+                    Debug.LogError($"removed object: {obj.sceneIndex}");
+                    savedObjects.RemoveAt(i);
+                    changes++;
+                }
+                else i++;
+            }
+            return savedObjects;
+        }
+
         public static bool IsValidPrefab(int prefabIndex)
         {
-            return prefabIndex >= 0 && prefabIndex < PrefabsDirectory.instance.directory.Length && PrefabsDirectory.instance.directory[prefabIndex] != null;
+            return prefabIndex < 0 || (prefabIndex < PrefabsDirectory.instance.directory.Length && PrefabsDirectory.instance.directory[prefabIndex] != null);
         }
         public static bool IsValidSaveableObject(int sceneIndex)
         {
-            return sceneIndex >= 0 && sceneIndex < SaveLoadManager.instance.GetCurrentObjects().Length && SaveLoadManager.instance.GetCurrentObjects()[sceneIndex] != null;
+            return sceneIndex < 0 || (sceneIndex < SaveLoadManager.instance.GetCurrentObjects().Length && SaveLoadManager.instance.GetCurrentObjects()[sceneIndex] != null);
         }
         public static bool IsValidPort(int portIndex)
         {
-            return portIndex >= 0 && portIndex < Port.ports.Length && Port.ports[portIndex] != null;
+            return portIndex < 0 || (portIndex < Port.ports.Length && Port.ports[portIndex] != null);
         }
 
         public static IEnumerator ShowNotificationAfterDelay(string text)
         {
             yield return new WaitUntil(() => GameState.playing && !GameState.justStarted);
-            //yield return new WaitForSeconds(5);
             NotificationUi.instance.ShowNotification(text);
             //Debug.Log("displayed notification?");
         }
