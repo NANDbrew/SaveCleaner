@@ -14,7 +14,7 @@ namespace SaveCleaner
     {
         public const string PLUGIN_ID = "com.nandbrew.savecleaner";
         public const string PLUGIN_NAME = "Save Cleaner";
-        public const string PLUGIN_VERSION = "0.3.0";
+        public const string PLUGIN_VERSION = "0.3.1";
 
         //--settings--
         internal static ConfigEntry<bool> overWrite;
@@ -23,7 +23,7 @@ namespace SaveCleaner
         {
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), PLUGIN_ID);
 
-            overWrite = Config.Bind("", "Overwrite file", true, new ConfigDescription("Overwrite save file. (else cleans loaded data, must be saved normally)"));
+            overWrite = Config.Bind("", "Overwrite file", false, new ConfigDescription("Overwrite save file. (else cleans loaded data, must be saved normally)"));
         }
     }
 }
