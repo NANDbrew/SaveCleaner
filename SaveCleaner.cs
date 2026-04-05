@@ -86,7 +86,7 @@ namespace SaveCleaner
                 for (int j = 0; j < traderBoatData.carriedGoods.Length; j++)
                 {
                     int index = traderBoatData.carriedGoods[j];
-                    if (index > 0 && !IsValidPrefab(index))
+                    if (index > 0 && !IsValidPrefab(PrefabsDirectory.GoodToItemIndex(index)))
                     {
                         traderBoatData.carriedGoods[j] = 0;
                         problemCount++;
@@ -200,6 +200,14 @@ namespace SaveCleaner
 
         public static bool IsValidPrefab(int prefabIndex)
         {
+/*            if (prefabIndex >= PrefabsDirectory.instance.directory.Length)
+            {
+                Debug.Log("good at " + prefabIndex + " is out of range");
+            }
+            if (PrefabsDirectory.instance.directory[prefabIndex] == null)
+            {
+                Debug.Log("good at " + prefabIndex +" does not exist");
+            }*/
             return prefabIndex < 0 || (prefabIndex < PrefabsDirectory.instance.directory.Length && PrefabsDirectory.instance.directory[prefabIndex] != null);
         }
         public static bool IsValidSaveableObject(int sceneIndex)
