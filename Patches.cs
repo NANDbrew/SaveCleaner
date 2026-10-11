@@ -39,7 +39,7 @@ namespace SaveCleaner
             {
                 binaryFormatter.Serialize(fileStream, saveContainer);
             }
-            Debug.LogWarning("Save Cleaned");
+            Debug.Log("Save Cleaned");
         }
 
         [HarmonyPatch("LoadNeeds")]
@@ -47,10 +47,10 @@ namespace SaveCleaner
         public static void LoadNeedsPatch(ref SaveContainer save, SaveableObject[] ___currentObjects)
         {
             if (Plugin.overWrite.Value) return;
-            Debug.LogWarning("Save Cleaner Running");
+            Debug.Log("Save Cleaner Running");
             save = SaveCleaner.CleanSave(save);
 
-            Debug.LogWarning("Loaded Data Cleaned");
+            Debug.Log("Loaded Data Cleaned");
         }
     }
 }

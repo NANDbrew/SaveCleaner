@@ -9,11 +9,16 @@ namespace SaveCleaner
 {
     internal static class SaveCleaner
     {
-        //static SaveContainer referenceData;
+#if DEBUG
+        static SaveContainer referenceData;
+        static SaveContainer outputData;
+#endif
         public static int changes = 0;
         public static SaveContainer CleanSave(SaveContainer saveContainer)
         {
-            //referenceData = saveContainer;
+#if DEBUG
+            referenceData = saveContainer;
+#endif
             //saveContainer.savedPrefabs.Add(new SavePrefabData(Vector3.zero, Quaternion.identity, 999, true, 100, 0, -1, -1, -1, 1, 9999));
             changes = 0;
             //changes += saveContainer.savedPrefabs.RemoveAll(prefab => !IsValidPrefab(prefab.prefabIndex) || (prefab.itemParentObject > -1 && !IsValidSaveableObject(prefab.itemParentObject)));
@@ -23,16 +28,37 @@ namespace SaveCleaner
             saveContainer.loggedMissions = CleanLoggedMissions(saveContainer.loggedMissions);
             saveContainer.traderBoatData = CleanTraderBoatData(saveContainer.traderBoatData);
             saveContainer.savedMissions = CleanMissionData(saveContainer.savedMissions);
+            saveContainer.marketsSupply = CleanMarketSupply(saveContainer.marketsSupply);
 
-            foreach (SaveObjectData objectData in saveContainer.savedObjects)
-            {
-                if (objectData.customization != null)
-                {
-                    objectData.customization = CleanCustomizationData(objectData.customization, objectData.sceneIndex);
-                }
-            }
+            outputData = saveContainer;
             NotificationUi.instance.StartCoroutine(ShowNotificationAfterDelay($"Save Cleaned\n\nfixed {changes} issues"));
             return saveContainer;
+        }
+
+        public static float[][] CleanMarketSupply(float[][] inputArray)
+        {
+            List<float[]> output = new List<float[]>();
+
+            //Debug.Log("fixing market supply");
+            for (int i = 0; i < inputArray.GetLength(0); i++)
+            {
+                if (i > Port.ports.Length)
+                {
+                    Debug.Log("resized market supply array");
+                    changes++;
+                    break;
+                }
+                if (inputArray[i] == null)
+                {
+#if DEBUG
+                    Debug.Log("skipping null market");
+#endif
+                    continue;
+                }
+                output.Add(inputArray[i]);
+            }
+
+            return output.ToArray();
         }
 
         public static SaveBoatCustomizationData CleanCustomizationData(SaveBoatCustomizationData data, int index)
@@ -194,6 +220,10 @@ namespace SaveCleaner
                     changes++;
                 }
                 else i++;
+                if (obj.customization != null)
+                {
+                    obj.customization = CleanCustomizationData(obj.customization, obj.sceneIndex);
+                }
             }
             return savedObjects;
         }
