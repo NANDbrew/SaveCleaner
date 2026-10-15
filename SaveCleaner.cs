@@ -19,16 +19,15 @@ namespace SaveCleaner
 #if DEBUG
             referenceData = saveContainer;
 #endif
-            //saveContainer.savedPrefabs.Add(new SavePrefabData(Vector3.zero, Quaternion.identity, 999, true, 100, 0, -1, -1, -1, 1, 9999));
             changes = 0;
-            //changes += saveContainer.savedPrefabs.RemoveAll(prefab => !IsValidPrefab(prefab.prefabIndex) || (prefab.itemParentObject > -1 && !IsValidSaveableObject(prefab.itemParentObject)));
-            //changes += saveContainer.savedObjects.RemoveAll(obj => !IsValidSaveableObject(obj.sceneIndex));
             saveContainer.savedPrefabs = CleanPrefabs(saveContainer.savedPrefabs);
             saveContainer.savedObjects = CleanObjects(saveContainer.savedObjects);
             saveContainer.loggedMissions = CleanLoggedMissions(saveContainer.loggedMissions);
             saveContainer.traderBoatData = CleanTraderBoatData(saveContainer.traderBoatData);
             saveContainer.savedMissions = CleanMissionData(saveContainer.savedMissions);
             saveContainer.marketsSupply = CleanMarketSupply(saveContainer.marketsSupply);
+            saveContainer.marketsKnownPrices = CleanMarketKnownPrices(saveContainer.marketsKnownPrices);
+            //Array.Resize(ref saveContainer.playerKnownPrices, Port.ports.Length);
 
             outputData = saveContainer;
             NotificationUi.instance.StartCoroutine(ShowNotificationAfterDelay($"Save Cleaned\n\nfixed {changes} issues"));
@@ -55,6 +54,43 @@ namespace SaveCleaner
 #endif
                     continue;
                 }
+                output.Add(inputArray[i]);
+            }
+
+            return output.ToArray();
+        }
+
+        public static PriceReport[][] CleanMarketKnownPrices(PriceReport[][] inputArray)
+        {
+            List<PriceReport[]> output = new List<PriceReport[]>();
+
+            //Debug.Log("fixing market supply");
+            for (int i = 0; i < inputArray.GetLength(0); i++)
+            {
+                if (i > Port.ports.Length)
+                {
+                    Debug.Log("resized market supply array");
+                    changes++;
+                    break;
+                }
+                if (inputArray[i] == null)
+                {
+#if DEBUG
+                    Debug.Log("skipping null market");
+#endif
+                    continue;
+                }
+                if (inputArray[i].Length > Port.ports.Length)
+                {
+                    Array.Resize(ref inputArray[i], Port.ports.Length);
+                }
+/*                for (int j = 0; j < inputArray[i].Length; j++)
+                {
+                    if (inputArray[i][j] != null && inputArray[i][j].buyPrices.Length >)
+                    {
+                        
+                    }
+                }*/
                 output.Add(inputArray[i]);
             }
 
