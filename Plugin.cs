@@ -14,7 +14,7 @@ namespace SaveCleaner
     {
         public const string PLUGIN_ID = "com.nandbrew.savecleaner";
         public const string PLUGIN_NAME = "Save Cleaner";
-        public const string PLUGIN_VERSION = "0.3.3";
+        public const string PLUGIN_VERSION = "0.3.4";
 
         //--settings--
         internal static ConfigEntry<bool> overWrite;
