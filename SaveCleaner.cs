@@ -28,8 +28,9 @@ namespace SaveCleaner
             saveContainer.marketsSupply = CleanMarketSupply(saveContainer.marketsSupply);
             saveContainer.marketsKnownPrices = CleanMarketKnownPrices(saveContainer.marketsKnownPrices);
             //Array.Resize(ref saveContainer.playerKnownPrices, Port.ports.Length);
-
+#if DEBUG
             outputData = saveContainer;
+#endif
             NotificationUi.instance.StartCoroutine(ShowNotificationAfterDelay($"Save Cleaned\n\nfixed {changes} issues"));
             return saveContainer;
         }
