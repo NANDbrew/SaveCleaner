@@ -195,6 +195,8 @@ namespace SaveCleaner
                 if (traderBoatData.carriedPriceReports.Length > Port.ports.Length)
                 {
                     Array.Resize(ref traderBoatData.carriedPriceReports, Port.ports.Length);
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning("resized trader boat price reports");
+                    problemCount++;
                 }
 
                 if (!IsValidPort(traderBoatData.currentIslandMarket))
