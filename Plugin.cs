@@ -3,6 +3,7 @@
 //
 using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using HarmonyLib;
 using System;
 using System.Reflection;
@@ -18,12 +19,17 @@ namespace SaveCleaner
 
         //--settings--
         internal static ConfigEntry<bool> overWrite;
+        internal static ConfigEntry<bool> verbose;
+
+        internal static ManualLogSource logSource;
 
         private void Awake()
         {
+            logSource = Logger;
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), PLUGIN_ID);
 
             overWrite = Config.Bind("", "Overwrite file", false, new ConfigDescription("Overwrite save file. (else cleans loaded data, must be saved normally)"));
+            verbose = Config.Bind("", "Verbose logging", false, new ConfigDescription(""));
         }
     }
 }

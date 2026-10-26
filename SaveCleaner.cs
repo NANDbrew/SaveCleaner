@@ -19,6 +19,8 @@ namespace SaveCleaner
 #if DEBUG
             referenceData = saveContainer;
 #endif
+            Plugin.logSource.LogInfo("Running Save Cleaner");
+
             changes = 0;
             saveContainer.savedPrefabs = CleanPrefabs(saveContainer.savedPrefabs);
             saveContainer.savedObjects = CleanObjects(saveContainer.savedObjects);
@@ -31,68 +33,79 @@ namespace SaveCleaner
 #if DEBUG
             outputData = saveContainer;
 #endif
+            Plugin.logSource.LogInfo($"Queueing message: Save Cleaned. fixed {changes} issues");
             NotificationUi.instance.StartCoroutine(ShowNotificationAfterDelay($"Save Cleaned\n\nfixed {changes} issues"));
             return saveContainer;
         }
 
         public static float[][] CleanMarketSupply(float[][] inputArray)
         {
+            int problemCount = 0;
             List<float[]> output = new List<float[]>();
 
-            //Debug.Log("Save Cleaner: fixing market supply");
+            if (Plugin.verbose.Value) Plugin.logSource.LogWarning("fixing market supply");
             for (int i = 0; i < inputArray.GetLength(0); i++)
             {
                 if (i > Port.ports.Length)
                 {
-                    Debug.Log("Save Cleaner: resized market supply array");
-                    changes++;
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning("resized market supply array " + i);
+                    problemCount++;
                     break;
                 }
                 if (inputArray[i] == null)
                 {
-#if DEBUG
-                    Debug.Log("Save Cleaner: skipping null market");
-#endif
+                    //if (Plugin.verbose.Value) Plugin.logSource.LogWarning("skipping null market " + i);
+                   
                     continue;
                 }
                 output.Add(inputArray[i]);
             }
-
+            if (problemCount > 0)
+            {
+                changes++;
+                Plugin.logSource.LogWarning($"fixed {problemCount} market supply issues");
+            }
             return output.ToArray();
         }
 
-        public static PriceReport[][] CleanMarketKnownPrices(PriceReport[][] inputArray)
+        public static PriceReport[][] CleanMarketKnownPrices(PriceReport[][] priceReports)
         {
+            int problemCount = 0;
             List<PriceReport[]> output = new List<PriceReport[]>();
 
-            //Debug.Log("Save Cleaner: fixing market supply");
-            for (int i = 0; i < inputArray.GetLength(0); i++)
+            if (Plugin.verbose.Value) Plugin.logSource.LogDebug("checking market price reports");
+            for (int i = 0; i < priceReports.GetLength(0); i++)
             {
                 if (i > Port.ports.Length)
                 {
-                    Debug.Log("Save Cleaner: resized market supply array");
-                    changes++;
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning("cutting market PriceReports array");
+                    problemCount++;
                     break;
                 }
-                if (inputArray[i] == null)
+                if (priceReports[i] == null)
                 {
-#if DEBUG
-                    Debug.Log("Save Cleaner: skipping null market");
-#endif
+                    //if (Plugin.verbose.Value) Plugin.logSource.LogInfo("skipping null market " + i);
                     continue;
                 }
-                if (inputArray[i].Length > Port.ports.Length)
+                if (priceReports[i].Length > Port.ports.Length)
                 {
-                    Array.Resize(ref inputArray[i], Port.ports.Length);
+                    Array.Resize(ref priceReports[i], Port.ports.Length);
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning("cutting PriceReport array for market " + i);
+                    problemCount++;
                 }
-/*                for (int j = 0; j < inputArray[i].Length; j++)
-                {
-                    if (inputArray[i][j] != null && inputArray[i][j].buyPrices.Length >)
-                    {
-                        
-                    }
-                }*/
-                output.Add(inputArray[i]);
+                /*                for (int j = 0; j < inputArray[i].Length; j++)
+                                {
+                                    if (inputArray[i][j] != null && inputArray[i][j].buyPrices.Length >)
+                                    {
+
+                                    }
+                                }*/
+                output.Add(priceReports[i]);
+            }
+            if (problemCount > 0)
+            {
+                Plugin.logSource.LogWarning($"fixed {problemCount} market PriceReport issues");
+                changes++;
             }
 
             return output.ToArray();
@@ -100,67 +113,73 @@ namespace SaveCleaner
 
         public static SaveBoatCustomizationData CleanCustomizationData(SaveBoatCustomizationData data, int index)
         {
-#if DEBUG
-            Debug.Log("Save Cleaner: cleaning customization for object " + index);
-#endif
+            int problemCount = 0;
+            if (Plugin.verbose.Value) Plugin.logSource.LogDebug("checking customization data for object " + index);
             BoatCustomParts parts = SaveLoadManager.instance.GetCurrentObjects()[index].GetComponent<BoatCustomParts>();
             BoatRefs refs = parts.GetComponent<BoatRefs>();
             if (data.masts.Length > refs.masts.Length)
             {
+                if (Plugin.verbose.Value) Plugin.logSource.LogWarning("cutting mast array for object " + index);
                 Array.Resize(ref data.masts, refs.masts.Length);
-#if DEBUG
-                Debug.Log("Save Cleaner: resized mast array for object " + index);
-#endif
-                changes++;
+                problemCount++;
             }
             if (data.partActiveOptions.Count > parts.availableParts.Count)
             {
-#if DEBUG
-                Debug.Log("Save Cleaner: resizing PartActiveOptions for object " + index);
-#endif
+                if (Plugin.verbose.Value) Plugin.logSource.LogWarning("cutting PartActiveOptions for object " + index);
                 data.partActiveOptions.RemoveRange(parts.availableParts.Count, data.partActiveOptions.Count - parts.availableParts.Count);
-                changes++;
+                problemCount++;
             }
-#if DEBUG
-            Debug.Log("Save Cleaner: updating PartActiveOptions for object " + index);
-#endif
+            //if (Plugin.verbose.Value) Debug.Log("updating PartActiveOptions for object " + index);
+
             for (int i = 0; i < data.partActiveOptions.Count; i++)
             {
                 if (data.partActiveOptions[i] >= parts.availableParts[i].partOptions.Count)
                 {
                     data.partActiveOptions[i] = parts.availableParts[i].activeOption;
+                    if (Plugin.verbose.Value) Plugin.logSource.LogInfo($"padded part options for part {i} on object {index}");
                     //changes++;
                 }
             }
-#if DEBUG
-            Debug.Log("Save Cleaner: checking sail colors for object " + index);
-#endif
+            if (problemCount > 0)
+            {
+                Plugin.logSource.LogWarning($"fixed {problemCount} issues with parts for object {index}");
+            }
+            if (Plugin.verbose.Value) Plugin.logSource.LogDebug("checking sails and sail colors for object " + index);
+
+            problemCount = 0;
             for (int i = 0; i < data.sails.Count;)
             {
                 var sail = data.sails[i];
                 if (sail.sailColor >= PrefabsDirectory.instance.sailColors.Length)
                 {
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning($"fixed invalid sail color ({sail.sailColor})");
                     sail.sailColor = 0;
-                    changes++;
+                    problemCount++;
                 }
                 if (sail.mastIndex >= refs.masts.Length || refs.masts[sail.mastIndex] == null || sail.prefabIndex >= PrefabsDirectory.instance.sails.Length || PrefabsDirectory.instance.sails[sail.prefabIndex] == null)
                 {
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning("removed sail with prefab index " + sail.prefabIndex);
                     data.sails.Remove(sail);
-                    changes++;
+                    problemCount++;
                     continue;
                 }
                 i++;
+            }
+            if (problemCount > 0)
+            {
+                Plugin.logSource.LogInfo($"fixed {problemCount} issues with sails for object {index}");
             }
             return data;
         }
 
         public static TraderBoatData[] CleanTraderBoatData(TraderBoatData[] incomingData)
         {
+            int problemCount = 0;
+            if (Plugin.verbose.Value) Plugin.logSource.LogDebug("checking trader boat data");
             List<TraderBoatData> outgoingData = new List<TraderBoatData>();
             for (int i = 0; i < incomingData.Length; i++)
             {
                 TraderBoatData traderBoatData = incomingData[i];
-                int problemCount = 0;
                 for (int j = 0; j < traderBoatData.carriedGoods.Length; j++)
                 {
                     int index = traderBoatData.carriedGoods[j];
@@ -168,40 +187,43 @@ namespace SaveCleaner
                     {
                         traderBoatData.carriedGoods[j] = 0;
                         problemCount++;
-#if DEBUG
-                        Debug.Log("Save Cleaner: removed trader boat carried good");
-#endif
+
+                        if (Plugin.verbose.Value) Plugin.logSource.LogWarning("removed trader boat carried good " + j);
                     }
                 }
+
+                if (traderBoatData.carriedPriceReports.Length > Port.ports.Length)
+                {
+                    Array.Resize(ref traderBoatData.carriedPriceReports, Port.ports.Length);
+                }
+
                 if (!IsValidPort(traderBoatData.currentIslandMarket))
                 {
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning("reset trader boat current island market from " + traderBoatData.currentIslandMarket);
                     traderBoatData.currentIslandMarket = -1;
                     problemCount++;
-#if DEBUG
-                    Debug.Log("Save Cleaner: removed trader boat current island market");
-#endif
                 }
                 if (!IsValidPort(traderBoatData.currentDestination))
                 {
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning("reset trader boat destination from " + traderBoatData.currentDestination);
                     traderBoatData.currentDestination = -1;
                     problemCount++;
-#if DEBUG
-                    Debug.Log("Save Cleaner: removed trader boat destination");
-#endif
                 }
-
-                if (IsValidPort(traderBoatData.lastIslandMarket))
+                if (!IsValidPort(traderBoatData.lastIslandMarket))
                 {
-                    outgoingData.Add(traderBoatData);
+                    problemCount++;
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning($"removed trader boat data {i} due to invalid last market");
                 }
                 else
                 {
-                    problemCount++;
-#if DEBUG
-                    Debug.LogError("Save Cleaner: Removed trader boat " + i);
-#endif
+                    outgoingData.Add(traderBoatData);
                 }
-                if (problemCount > 0) changes++;
+
+            }
+            if (problemCount > 0)
+            {
+                changes++;
+                Plugin.logSource.LogWarning($"fixed {problemCount} issues with trader boats");
             }
             return outgoingData.ToArray();
         }
@@ -216,93 +238,111 @@ namespace SaveCleaner
                 LoggedMission mission = loggedMissions[i];
                 if (mission.goodIndex != 0 && !IsValidPrefab(mission.goodIndex))
                 {
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning("Removed loggedMission goodIndex " + mission.goodIndex);
                     mission.goodIndex = 0;
                     problemCount++;
-#if DEBUG
-                    Debug.LogError("Save Cleaner: removed loggedMission goodIndex");
-#endif
 
                 }
                 if (!Enum.IsDefined(typeof(PortRegion), mission.repRegion))
                 {
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning("Removed loggedMission reputation region " + mission.repRegion);
                     mission.repRegion = (int)PortRegion.none;
                     problemCount++;
-#if DEBUG
-                    Debug.LogError("Save Cleaner: removed loggedMission repRegion");
-#endif
+
                 }
             }
-            if (problemCount > 0) changes++;
+            if (problemCount > 0)
+            {
+                changes++;
+                Plugin.logSource.LogWarning($"Fixed {problemCount} issues in logged missions");
+            }
             return loggedMissions;
         }
 
 
         public static SaveMissionData[] CleanMissionData(SaveMissionData[] savedMissions)
         {
+            int problemCount = 0;
             for (int i = 0; i < savedMissions.Length; i++)
             {
                 if (savedMissions[i] == null) continue;
                 SaveMissionData missionData = savedMissions[i];
                 if (missionData != null && IsValidPrefab(missionData.goodPrefabIndex) && IsValidPort(missionData.originPort) && IsValidPort(missionData.destinationPort))
                 {
-                    //outgoingData.Add(missionData);
                     continue;
                 }
                 savedMissions[i] = null;
-                changes++;
-                Debug.LogError("Save Cleaner: removed savedMission");
+                //changes++;
+                problemCount++;
+                if (Plugin.verbose.Value) Plugin.logSource.LogWarning("removed savedMission");
 
+            }
+
+            if (problemCount > 0)
+            {
+                changes++;
+                Plugin.logSource.LogWarning($"Fixed {problemCount} missions");
             }
             return savedMissions;
         }
 
         public static List<SavePrefabData> CleanPrefabs(List<SavePrefabData> savedPrefabs)
         {
+            if (Plugin.verbose.Value) Plugin.logSource.LogDebug("checking saved prefabs");
+            int problemCount = 0;
+            List<int> invalidPrefabIDs = new List<int>();
             for (int i = 0; i < savedPrefabs.Count;)
             {
                 var prefab = savedPrefabs[i];
-                if (!IsValidPrefab(prefab.prefabIndex) || (prefab.itemParentObject > -1 && !IsValidSaveableObject(prefab.itemParentObject)))
+                bool shouldRemove = false;
+                if (!IsValidPrefab(prefab.prefabIndex))
                 {
-                    Debug.LogError($"Save Cleaner: removed prefab: {prefab.prefabIndex}, parent id was {prefab.itemParentObject}");
+                    if (!invalidPrefabIDs.Contains(prefab.prefabIndex)) invalidPrefabIDs.Add(prefab.prefabIndex);
+                    shouldRemove = true;
+                }
+
+                if (shouldRemove || (prefab.itemParentObject > -1 && !IsValidSaveableObject(prefab.itemParentObject)))
+                {
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning($"removed saved item: {prefab.prefabIndex}, parent id was {prefab.itemParentObject}");
                     savedPrefabs.RemoveAt(i);
-                    changes++;
+                    //changes++;
+                    problemCount++;
                 }
                 else i++;
+            }
+            if (problemCount > 0)
+            {
+                Plugin.logSource.LogWarning($"removed {problemCount} item instances");
+                changes += invalidPrefabIDs.Count;
             }
             return savedPrefabs;
         }
 
         public static List<SaveObjectData> CleanObjects(List<SaveObjectData> savedObjects)
         {
+            if (Plugin.verbose.Value) Plugin.logSource.LogDebug("checking saved objects");
             for (int i = 0; i < savedObjects.Count;)
             {
                 var obj = savedObjects[i];
                 if (!IsValidSaveableObject(obj.sceneIndex))
                 {
-                    Debug.Log($"Save Cleaner: removed object: {obj.sceneIndex}");
+                    Plugin.logSource.LogWarning($"removed object with index {obj.sceneIndex}");
                     savedObjects.RemoveAt(i);
                     changes++;
                     continue;
                 }
-                else i++;
+
                 if (obj.customization != null)
                 {
                     obj.customization = CleanCustomizationData(obj.customization, obj.sceneIndex);
                 }
+                i++;
             }
             return savedObjects;
         }
 
         public static bool IsValidPrefab(int prefabIndex)
         {
-/*            if (prefabIndex >= PrefabsDirectory.instance.directory.Length)
-            {
-                Debug.Log("Save Cleaner: good at " + prefabIndex + " is out of range");
-            }
-            if (PrefabsDirectory.instance.directory[prefabIndex] == null)
-            {
-                Debug.Log("Save Cleaner: good at " + prefabIndex +" does not exist");
-            }*/
             return prefabIndex < 0 || (prefabIndex < PrefabsDirectory.instance.directory.Length && PrefabsDirectory.instance.directory[prefabIndex] != null);
         }
         public static bool IsValidSaveableObject(int sceneIndex)
@@ -318,7 +358,7 @@ namespace SaveCleaner
         {
             yield return new WaitUntil(() => GameState.playing && !GameState.justStarted);
             NotificationUi.instance.ShowNotification(text);
-            //Debug.Log("Save Cleaner: displayed notification?");
+            //Debug.Log("displayed notification?");
         }
     }
 }

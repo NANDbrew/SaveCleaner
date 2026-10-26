@@ -78,6 +78,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SaveCleaner.cs" />
     <Compile Include="Patches.cs" />
     <Compile Include="Plugin.cs" />

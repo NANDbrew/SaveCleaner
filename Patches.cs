@@ -18,8 +18,8 @@ namespace SaveCleaner
         {   //removes all references to the modded boat before the game loads
             if (Plugin.overWrite.Value == false) return;
 
-            Debug.LogWarning("Save Cleaner Running");
-            Debug.LogWarning("Cleaning Slot " + SaveSlots.currentSlot);
+            //Plugin.logSource.LogInfo("Save Cleaner Running");
+            Plugin.logSource.LogInfo("Cleaning Slot " + SaveSlots.currentSlot);
             string path = ((backupIndex != 0) ? SaveSlots.GetBackupPath(SaveSlots.currentSlot, backupIndex) : SaveSlots.GetCurrentSavePath());
             SaveContainer saveContainer;
             BinaryFormatter binaryFormatter = new BinaryFormatter();
@@ -39,7 +39,7 @@ namespace SaveCleaner
             {
                 binaryFormatter.Serialize(fileStream, saveContainer);
             }
-            Debug.Log("Save Cleaned");
+            Plugin.logSource.LogInfo($"Saved Cleaned data to slot{SaveSlots.currentSlot}.save");
         }
 
         [HarmonyPatch("LoadNeeds")]
@@ -47,10 +47,10 @@ namespace SaveCleaner
         public static void LoadNeedsPatch(ref SaveContainer save, SaveableObject[] ___currentObjects)
         {
             if (Plugin.overWrite.Value) return;
-            Debug.Log("Save Cleaner Running");
+            //Plugin.logSource.LogInfo("Running Save Cleaner");
             save = SaveCleaner.CleanSave(save);
 
-            Debug.Log("Loaded Data Cleaned");
+            Plugin.logSource.LogInfo("Loaded Data Cleaned");
         }
     }
 }
