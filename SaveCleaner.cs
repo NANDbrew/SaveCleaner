@@ -43,7 +43,7 @@ namespace SaveCleaner
             int problemCount = 0;
             List<float[]> output = new List<float[]>();
 
-            if (Plugin.verbose.Value) Plugin.logSource.LogWarning("fixing market supply");
+            if (Plugin.verbose.Value) Plugin.logSource.LogDebug("checking market supply");
             for (int i = 0; i < inputArray.GetLength(0); i++)
             {
                 if (i > Port.ports.Length)
@@ -56,7 +56,7 @@ namespace SaveCleaner
                 {
                     //if (Plugin.verbose.Value) Plugin.logSource.LogWarning("skipping null market " + i);
                    
-                    continue;
+                    // do nothing
                 }
                 output.Add(inputArray[i]);
             }
@@ -84,10 +84,10 @@ namespace SaveCleaner
                 }
                 if (priceReports[i] == null)
                 {
-                    //if (Plugin.verbose.Value) Plugin.logSource.LogInfo("skipping null market " + i);
-                    continue;
+                    // do nothing. (used to skip, but that breaks the array index
+
                 }
-                if (priceReports[i].Length > Port.ports.Length)
+                else if (priceReports[i].Length > Port.ports.Length)
                 {
                     Array.Resize(ref priceReports[i], Port.ports.Length);
                     if (Plugin.verbose.Value) Plugin.logSource.LogWarning("cutting PriceReport array for market " + i);
