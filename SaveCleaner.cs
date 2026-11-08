@@ -87,10 +87,10 @@ namespace SaveCleaner
                     // do nothing. (used to skip, but that breaks the array index
 
                 }
-                else if (priceReports[i].Length > Port.ports.Length)
+                else if (priceReports[i].Length != Port.ports.Length)
                 {
                     Array.Resize(ref priceReports[i], Port.ports.Length);
-                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning("cutting PriceReport array for market " + i);
+                    if (Plugin.verbose.Value) Plugin.logSource.LogWarning("changing PriceReport array for market " + i);
                     problemCount++;
                 }
                 /*                for (int j = 0; j < inputArray[i].Length; j++)
@@ -192,7 +192,7 @@ namespace SaveCleaner
                     }
                 }
 
-                if (traderBoatData.carriedPriceReports.Length > Port.ports.Length)
+                if (traderBoatData.carriedPriceReports.Length != Port.ports.Length)
                 {
                     Array.Resize(ref traderBoatData.carriedPriceReports, Port.ports.Length);
                     if (Plugin.verbose.Value) Plugin.logSource.LogWarning("resized trader boat price reports");
@@ -211,6 +211,7 @@ namespace SaveCleaner
                     traderBoatData.currentDestination = -1;
                     problemCount++;
                 }
+
                 if (!IsValidPort(traderBoatData.lastIslandMarket))
                 {
                     problemCount++;
